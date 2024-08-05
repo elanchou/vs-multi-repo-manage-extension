@@ -1,0 +1,92 @@
+{
+  "name": "git-workspace-manager",
+  "displayName": "Git Workspace Manager",
+  "description": "Manage multiple Git repositories in your workspace",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "SCM Providers"
+  ],
+  "activationEvents": [
+    "onView:gitWorkspaceRepositories"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "git-workspace-manager.openPanel",
+        "title": "Open Git Workspace Manager"
+      },
+      {
+        "command": "git-workspace-manager.refreshRepositories",
+        "title": "Refresh Repositories",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "git-workspace-manager.checkoutBranch",
+        "title": "Checkout Branch"
+      },
+      {
+        "command": "git-workspace-manager.fetchAll",
+        "title": "Fetch All Repositories"
+      },
+      {
+        "command": "git-workspace-manager.pullAll",
+        "title": "Pull All Repositories"
+      },
+      {
+        "command": "git-workspace-manager.pushAll",
+        "title": "Push All Repositories"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "git-workspace-manager",
+          "title": "Git Workspace Manager",
+          "icon": "resources/git-workspace-manager.svg"
+        }
+      ]
+    },
+    "views": {
+      "git-workspace-manager": [
+        {
+          "id": "gitWorkspaceRepositories",
+          "name": "Repositories"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "git-workspace-manager.refreshRepositories",
+          "when": "view == gitWorkspaceRepositories",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.60.0",
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "14.x",
+    "@typescript-eslint/eslint-plugin": "^4.26.0",
+    "@typescript-eslint/parser": "^4.26.0",
+    "eslint": "^7.27.0",
+    "glob": "^7.1.7",
+    "mocha": "^8.4.0",
+    "typescript": "^4.3.2",
+    "vscode-test": "^1.5.2"
+  }
+}
