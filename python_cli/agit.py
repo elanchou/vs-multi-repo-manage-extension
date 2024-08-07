@@ -1,59 +1,51 @@
 import os
-import argparse
+import signal
 import subprocess
+import argparse
 
-def find_git_repos(base_dir):
+class TimeoutException(Exception):
+    pass
+
+def timeout_handler(signum, frame):
+    raise TimeoutException
+
+def find_git_repos(base_dir, timeout=30):
     """
-    Recursively find all Git repositories in the given directory
+    Recursively find all Git repositories in the given directory with a timeout.
     """
     git_repos = []
-    for root, dirs, files in os.walk(base_dir):
-        if '.git' in dirs:
-            git_repos.append(root)
+    
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout)
+    
+    try:
+        for root, dirs, files in os.walk(base_dir):
+            if '.git' in dirs:
+                git_repos.append(root)
+        signal.alarm(0)
+    except TimeoutException:
+        print(f"Timeout reached while searching in {base_dir}")
+    except Exception as e:
+        print(f"Error while accessing {root}: {e}")
+    
     return git_repos
 
-def execute_git_command(repo_dir, command):
+def execute_git_command(repo_dir, command, timeout=30):
     """
     Execute a git command in the specified repo directory and print output
     """
     try:
-        result = subprocess.run(command, cwd=repo_dir, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(command, cwd=repo_dir, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout)
         print(f'[agit] - {" ".join(command)} in {repo_dir}:\n{result.stdout}')
     except subprocess.CalledProcessError as e:
         print(f'[agit] - Error executing command {" ".join(command)} in {repo_dir}: {e.stderr}')
-
-def checkout_branch(repo_dir, branch_name):
-    """
-    Switch to the specified Git branch, creating it if it doesn't exist
-    """
-    execute_git_command(repo_dir, ['git', 'checkout', branch_name])
-    # If checkout fails, create and switch to the branch
-    execute_git_command(repo_dir, ['git', 'checkout', '-b', branch_name])
-
-def fetch_branch(repo_dir):
-    """
-    Fetch the latest changes from the remote
-    """
-    execute_git_command(repo_dir, ['git', 'fetch'])
-
-def pull_branch(repo_dir):
-    """
-    Pull the latest changes from the remote branch
-    """
-    execute_git_command(repo_dir, ['git', 'pull'])
-
-def push_branch(repo_dir):
-    """
-    Push local changes to the remote branch
-    """
-    execute_git_command(repo_dir, ['git', 'push'])
+    except subprocess.TimeoutExpired:
+        print(f'[agit] - Timeout executing command {" ".join(command)} in {repo_dir}')
 
 def main():
-    parser = argparse.ArgumentParser(description='Manage Git branches in multiple repositories')
-    parser.add_argument('branch', help='Branch name')
-    parser.add_argument('--fetch', action='store_true', help='Fetch latest changes')
-    parser.add_argument('--pull', action='store_true', help='Pull latest changes')
-    parser.add_argument('--push', action='store_true', help='Push changes to remote')
+    parser = argparse.ArgumentParser(description='Execute Git commands in multiple repositories')
+    parser.add_argument('command', help='Git command to execute (e.g., checkout, pull, push)')
+    parser.add_argument('args', nargs='*', help='Arguments for the Git command')
     
     args = parser.parse_args()
 
@@ -61,18 +53,9 @@ def main():
     git_repos = find_git_repos(base_dir)
 
     for repo_dir in git_repos:
-        print(f'Processing repo: {repo_dir} on branch: {args.branch}')
-        
-        if args.fetch:
-            fetch_branch(repo_dir)
-        
-        if args.pull:
-            pull_branch(repo_dir)
-        
-        if args.push:
-            push_branch(repo_dir)
-        
-        checkout_branch(repo_dir, args.branch)
+        print(f'Processing repo: {repo_dir}')
+        git_command = ['git', args.command] + args.args
+        execute_git_command(repo_dir, git_command)
 
 if __name__ == '__main__':
     main()
