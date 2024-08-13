@@ -62,14 +62,18 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help='Increase output verbosity')
     parser.add_argument('--exclude', nargs='*', help='Exclude repositories containing these substrings')
     parser.add_argument('--include', nargs='*', help='Only include repositories containing these substrings')
+    parser.add_argument('--repos', nargs='*', help='Specify paths to Git repositories directly')
     
     args = parser.parse_args()
 
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    base_dir = os.getcwd()
-    git_repos = find_git_repos(base_dir)
+    if args.repos:
+        git_repos = [os.path.abspath(repo) for repo in args.repos if os.path.isdir(repo)]
+    else:
+        base_dir = os.getcwd()
+        git_repos = find_git_repos(base_dir)
 
     if args.exclude:
         git_repos = [repo for repo in git_repos if not any(excl in repo for excl in args.exclude)]
