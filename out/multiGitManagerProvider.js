@@ -34,11 +34,9 @@ class MultiGitManagerProvider {
                 return Promise.resolve([]);
             }
             if (element) {
-                // If element is provided, we're getting children of a specific repo
                 return this.getBranchesForRepo(element.repoPath);
             }
             else {
-                // If no element, we're getting the root items (repos)
                 return this.getRepos();
             }
         });
@@ -82,11 +80,54 @@ class MultiGitManagerProvider {
                 const repoPath = folder.uri.fsPath;
                 if (fs.existsSync(path.join(repoPath, '.git'))) {
                     try {
-                        yield execAsync(`git checkout ${branchName}`, { cwd: repoPath });
+                        yield this.checkoutOrCreateBranch(repoPath, branchName);
                         vscode.window.showInformationMessage(`Checked out ${branchName} in ${path.basename(repoPath)}`);
                     }
                     catch (error) {
-                        vscode.window.showErrorMessage(`Failed to checkout ${branchName} in ${path.basename(repoPath)}: ${error}`);
+                        vscode.window.showErrorMessage(`Failed to checkout or create ${branchName} in ${path.basename(repoPath)}: ${error}`);
+                    }
+                }
+            }
+            this.refresh();
+        });
+    }
+    checkoutOrCreateBranch(repoPath, branchName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield execAsync(`git checkout ${branchName}`, { cwd: repoPath });
+            }
+            catch (error) {
+                // If checkout fails, try to create and checkout the new branch
+                yield execAsync(`git checkout -b ${branchName}`, { cwd: repoPath });
+            }
+        });
+    }
+    pullAll() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.executeGitCommandForAll('git pull', 'Pulled');
+        });
+    }
+    fetchAll() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.executeGitCommandForAll('git fetch', 'Fetched');
+        });
+    }
+    pushAll() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.executeGitCommandForAll('git push', 'Pushed');
+        });
+    }
+    executeGitCommandForAll(command, actionName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            for (const folder of this.workspaceFolders) {
+                const repoPath = folder.uri.fsPath;
+                if (fs.existsSync(path.join(repoPath, '.git'))) {
+                    try {
+                        yield execAsync(command, { cwd: repoPath });
+                        vscode.window.showInformationMessage(`${actionName} in ${path.basename(repoPath)}`);
+                    }
+                    catch (error) {
+                        vscode.window.showErrorMessage(`Failed to ${actionName.toLowerCase()} in ${path.basename(repoPath)}: ${error}`);
                     }
                 }
             }

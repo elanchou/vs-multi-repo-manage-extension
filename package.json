@@ -13,7 +13,7 @@
     "onView:multiGitManagerView"
   ],
   "main": "./out/extension.js",
-  "contributes": {
+"contributes": {
     "viewsContainers": {
       "activitybar": [
         {
@@ -41,6 +41,21 @@
         "command": "multiGitManager.checkoutAll",
         "title": "Checkout All",
         "icon": "$(git-branch)"
+      },
+      {
+        "command": "multiGitManager.pullAll",
+        "title": "Pull All",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "multiGitManager.fetchAll",
+        "title": "Fetch All",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "multiGitManager.pushAll",
+        "title": "Push All",
+        "icon": "$(arrow-up)"
       }
     ],
     "menus": {
@@ -52,6 +67,21 @@
         },
         {
           "command": "multiGitManager.checkoutAll",
+          "when": "view == multiGitManagerView",
+          "group": "navigation"
+        },
+        {
+          "command": "multiGitManager.pullAll",
+          "when": "view == multiGitManagerView",
+          "group": "navigation"
+        },
+        {
+          "command": "multiGitManager.fetchAll",
+          "when": "view == multiGitManagerView",
+          "group": "navigation"
+        },
+        {
+          "command": "multiGitManager.pushAll",
           "when": "view == multiGitManagerView",
           "group": "navigation"
         }
